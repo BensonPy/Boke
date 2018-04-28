@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+    <link rel="stylesheet" href="/static/plugins/bootstrap/css/bootstrap.css"/>
+    <link rel="stylesheet" href="/static/plugins/font-awesome/css/font-awesome.css"/>
+    <link rel="stylesheet" href="/static/css/edmure.css"/>
+    <link rel="stylesheet" href="/static/css/commons.css"/>
+    <link rel="stylesheet" href="/static/css/row-avatar.css"/>
+    <link rel="stylesheet" href="/static/css/home.css"/>
+    <script type="text/javascript" src="/static/js/jquery.js"></script>
+    <script type="text/javascript" src="/static/plugins/bootstrap/js/bootstrap.js"></script>
+</head>
+<body>
+<div class="pg-header">
+    <div class="title">{{ author_name }}的文章</div>
+    <div class="menu-list">
+        <a class="menu-item" href="/">首页</a>
+        <a class="menu-item" href="/delete/{{ nid }}">删除本文章</a>
+    </div>
+</div>
+<div class="pg-body">
+    <div class="body-menu">
+        <div class="notice">
+            <div class="notice-header">个人信息：</div>
+            <div class="notice-body">
+                <ul>
+                    <li>用户名：{{ author_name }}</li>
+                    <li>QQ号：{{ qq }}</li>
+                </ul>
+                <div class="memo">
+                    努力做更好的自己
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="body-content">
+        <div class="art-title">
+            <a>{{ content_title }}</a>
+        </div>
+        <div class="art-content">
+            {{ content }}
+        </div>
+        <div class="art-recommend clearfix">
+            <div class="recommend">
+                <a onclick="Good();" href="#" class="up"
+                   style="margin: 5px 10px;display: inline-block;padding: 5px 15px;border: 1px solid #dddddd;text-align: center;">
+                    <i class="fa fa-thumbs-o-up fa-3" aria-hidden="true" style="font-size: 25px"></i>
+                    <div>{{ article.up_count }}</div>
+                </a>
+                {% if request.session.user_info.username == author_name %}
+                    <div>
+                        <a href="/edit/{{ author_name }}/{{ nid }}.html">编辑文章</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="art-tips clearfix">
+            <div class="tips">
+                <span class="ctime">{{ article.create_time|date:"Y-m-d H:i:s" }}</span>
+                <a class="author">{{ author_name }}</a>
+                <span class="comment-count">评论({{ article.comment_count }})</span>
+                <span class="read-count">阅读({{ article.read_count }})</span>
+            </div>
+        </div>
+        <div id="AllanboltSignature">
+            <div style="border-bottom: #e0e0e0 1px dashed; border-left: #e0e0e0 1px dashed; padding: 10px; font-family: 微软雅黑; font-size: 11px; border-top: #e0e0e0 1px dashed; border-right: #e0e0e0 1px dashed; "
+                 id="PSignature">
+                <div style="float:left;width:70px;">
+                    <img src="/static/imgs/timg.jpeg" style="width:65px;height:65px">
+                </div>
+                <div style="float:left;padding-top:10px;">
+
+                    <div style="padding: 1px">作者：<a href="#" target="_blank">{{ author_name }}</a></div>
+                    <div style="padding: 1px">出处：<a href="#" target="_blank">http://www.127.0.0.1:8000/</a>
+                    </div>
+                    <div style="padding: 1px">本文版权归作者所有，欢迎转载，但未经作者同意必须保留此段声明，且在文章页面明显位置给出原文连接</div>
+                </div>
+                <div style="clear:both;"></div>
+            </div>
+        </div>
+        <div class="art-comment">
+            <div class="comment-title">
+                评论:
+            </div>
+            <div class="comment-list">
+                {% for comment in comment_list %}
+                    <div class="comment-item">
+                        <div class="reply-title clearfix">
+                            {{ forloop.counter }}楼：
+                            <br>
+                            <div class="user-info">
+                                <span>评论用户：{{ comment.user.username }}</span>
+                                <span>评论时间：{{ comment.create_time|date:"Y-m-d H:i:s" }}</span>
+                            </div>
+                            <div class="reply">
+                                <a onclick="ReplyComment({{ comment.nid }});" id="reply_1{{ comment.nid }}">回 复</a>
+                                <a onclick="CancelReply({{ comment.nid }});" style="display: none"
+                                   id="cancel{{ comment.nid }}">撤 销</a>
+                            </div>
+                            <br>
+                            <img style="width: 70px;height: 70px;padding: 1px; float: left"
+                                 src="/{{ comment.user.avatar }}">
+                        </div>
+                        <div>
+                            <div>
+                                <strong>{{ comment.content }}</strong>
+                            </div>
+                        </div>
+                        {% for item in reply_list %}
+                            {% if item.comment_reply_id == comment.nid %}
+                            <div>
+                                <div>
+                                    &nbsp;&nbsp;&nbsp;{{ item.user.username }}:<strong>{{ item.content }}</strong>
+                                </div>
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                    {% if request.session.user_info %}
+                        <div style="display: none" id="{{ comment.nid }}">
+                            <form method="post"
+                                  action="/reply/{{ comment.nid }}/{{ comment.user.nid }}/{{ forloop.counter }}"
+                                  id="fm{{ comment.nid }}">
+                                {% csrf_token %}
+                                <input type="text" id="reply{{ comment.nid }}" style="width: 800px" name="content">
+                                <input class="btn btn-default" type="button"
+                                       onclick="ReplySubmit({{ article.nid }},{{ comment.nid }},{{ request.session.user_info.nid }});"/>
+                            </form>
+                        </div>
+                    {% endif %}
+                        {% if request.session.user_info.username == comment.user.username %}
+                            <form id="cm" method="POST">
+                                {% csrf_token %}
+                                <input type="hidden" value="{{ comment.nid }}" name="comment_nid"/>
+                                <a onclick="Delete();" class="btn btn-warning">删除评论</a>
+                            </form>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+            <div class="comment-area">
+                <form method="POST" id="fm">
+                    {% csrf_token %}
+                    <div class="reply-area" style="position: relative;">
+                        {% if not request.session.user_info %}
+                            <div style="text-align:center;line-height:200px;position: absolute;top:0;left:0;right:0;bottom: 0;background-color: rgba(255,255,255,.6)">
+                                您需要登录后才可以回帖 <a href="/login/">登录</a> | <a href="/register/">立即注册</a>
+                            </div>
+                        {% endif %}
+                        <textarea name="content" style="width: 100%;height:200px;"></textarea>
+                    </div>
+                    <div>
+                        <div class="reply-btn">
+                            <a class="btn btn-primary" id="submit">发表回复</a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="/static/js/jquery.js"></script>
+<script type="text/javascript">
+    $(function () {
+        Reply();
+    });
+    function Reply() {
+        $('#submit').click(function () {
+            $.ajax({
+                url: '/reply/{{ request.session.user_info.username }}/{{ nid }}',
+                type: 'POST',
+                data: $('#fm').serialize(),
+                success: function () {
+                    location.reload();
+                }
+            })
+        })
+    }
+    function Delete() {
+        $.ajax({
+            url: '/delete_comment/',
+            type: 'POST',
+            data: $('#cm').serialize(),
+            success: function () {
+                location.reload();
+            }
+        })
+    }
+    function Good() {
+        $.ajax({
+            url: '/good/{{ article.nid }}/{{ request.session.user_info.nid }}',
+            type: 'GET',
+            success: function (arg) {
+                if (arg.status) {
+                    location.reload();
+                } else {
+                    window.alert("点赞成功");
+                    location.reload();
+                }
+            }
+        })
+    }
+    function ReplyComment(nid) {
+        $("#" + "reply" + nid).parent().parent().removeAttr('style');
+        $("#" + "cancel" + nid).removeAttr('style');
+        $("#" + "reply_1" + nid).attr('style', "display:none;")
+    }
+    function CancelReply(nid) {
+        $("#" + "reply" + nid).parent().parent().attr('style', "display:none;");
+        $("#" + "cancel" + nid).attr('style', "display:none;");
+        $("#" + "reply_1" + nid).removeAttr('style');
+    }
+    function ReplySubmit(a, b, c) {
+        $.ajax({
+            url: "/comment-reply/" +a+ "/"+ b + "/" + c,
+            type: 'POST',
+            data: $("#" + "fm" + b).serialize(),
+            success: function (arg) {
+                window.alert("回复成功");
+                location.reload();
+            }
+        })
+    }
+</script>
+</body>
+</html>
